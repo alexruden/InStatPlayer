@@ -25,7 +25,6 @@ Pod::Spec.new do |s|
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'alexiosdeveloper@gmail.com' => 'alexiosdeveloper@gmail.com' }
   s.source           = { :git => 'https://github.com/alexruden/InStatPlayer.git', :tag => s.version.to_s }
-  s.social_media_url = 'https://twitter.com/JiromTomson'
   s.swift_version = '4.2'
   s.ios.deployment_target = '10.0'
 
