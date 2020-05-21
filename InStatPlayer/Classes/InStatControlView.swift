@@ -225,6 +225,13 @@ open class InStatControlView: UIView {
 	open var isFullscreen  = false
 	open var isMaskShowing = true
 	open var tapGesture: UITapGestureRecognizer!
+	open var isAutoFade: Bool = true {
+		didSet {
+			autoFadeControlView()
+		}
+	}
+	open var fadeTimeInterval: TimeInterval = 4
+	open var fadeDuration: TimeInterval = 0.3
 
 	fileprivate var isFullScreen: Bool {
 		get {
@@ -306,16 +313,16 @@ open class InStatControlView: UIView {
 		previousButton.heightAnchor.constraint(equalToConstant: 57).isActive = true
 
 		mainMaskView.addSubview(airplayButton)
-		airplayButton.rightAnchor.constraint(equalTo: mainMaskView.rightAnchor, constant: -25).isActive = true
+		airplayButton.rightAnchor.constraint(equalTo: mainMaskView.rightAnchor, constant: -15).isActive = true
 		airplayButton.topAnchor.constraint(equalTo: mainMaskView.topAnchor, constant: 15).isActive = true
-		airplayButton.widthAnchor.constraint(equalToConstant: 25).isActive = true
-		airplayButton.heightAnchor.constraint(equalToConstant: 18).isActive = true
+		airplayButton.widthAnchor.constraint(equalToConstant: 35).isActive = true
+		airplayButton.heightAnchor.constraint(equalToConstant: 28).isActive = true
 
 		mainMaskView.addSubview(videoGravityButton)
-		videoGravityButton.leftAnchor.constraint(equalTo: mainMaskView.leftAnchor, constant: 25).isActive = true
+		videoGravityButton.leftAnchor.constraint(equalTo: mainMaskView.leftAnchor, constant: 15).isActive = true
 		videoGravityButton.topAnchor.constraint(equalTo: mainMaskView.topAnchor, constant: 15).isActive = true
-		videoGravityButton.widthAnchor.constraint(equalToConstant: 25).isActive = true
-		videoGravityButton.heightAnchor.constraint(equalToConstant: 18).isActive = true
+		videoGravityButton.widthAnchor.constraint(equalToConstant: 35).isActive = true
+		videoGravityButton.heightAnchor.constraint(equalToConstant: 28).isActive = true
 	}
 
 	func fullscreenControlConstraints() {
@@ -323,6 +330,8 @@ open class InStatControlView: UIView {
 		mainMaskView.addSubview(fullscreenButton)
 		fullscreenButton.rightAnchor.constraint(equalTo: mainMaskView.rightAnchor, constant: -15).isActive = true
 		fullscreenButton.bottomAnchor.constraint(equalTo: mainMaskView.bottomAnchor, constant: -15).isActive = true
+		fullscreenButton.widthAnchor.constraint(equalToConstant: 35).isActive = true
+		fullscreenButton.heightAnchor.constraint(equalToConstant: 28).isActive = true
 	}
 
 	func setupTimeLabelsConstraints() {
@@ -380,13 +389,25 @@ open class InStatControlView: UIView {
 
 	open func indicatorShow(_ show: Bool) {
 		indicatorView.isHidden = !show
+		if show {
+			isShowControlView(!show, animation:  false)
+		}
 	}
 
 	open func playbackChange(_ currentTime: TimeInterval, totalTime: TimeInterval) {
 
 		currentTimeLabel.text	= formatSecondsToString(currentTime)
 		totalTimeLabel.text		= formatSecondsToString(totalTime)
-		progressSlider.value = Float(currentTime) / Float(totalTime)
+        let progress = Float(currentTime / totalTime)
+        
+        if isScrubbing == false {
+            // 0.25 - it is timer interval in InStatPlayerView
+            UIView.animate(withDuration: 0.25, delay: 0.0, options: .curveLinear, animations: {
+                self.progressSlider.setValue(progress, animated: true)
+            }, completion: nil)
+        } else {
+            progressSlider.value = progress
+        }
 
 		if let player = playerView {
 
@@ -399,27 +420,38 @@ open class InStatControlView: UIView {
 		progressView.setProgress(Float(progress)/Float(total), animated: true)
 	}
 
-	open func isShowControlView(_ isShow: Bool) {
+	open func isShowControlView(_ isShow: Bool, animation: Bool = true) {
 
-		self.isMaskShowing = isShow
-		UIView.animate(withDuration: 0.3, animations: {
+		if animation {
+			self.isMaskShowing = isShow
+			UIView.animate(withDuration: fadeDuration, animations: {
+
+				self.mainMaskView.backgroundColor = UIColor(white: 0, alpha: isShow ? 0.5 : 0.0)
+				self.mainMaskView.alpha = isShow ? 1.0 : 0.0
+				self.layoutIfNeeded()
+			}) { (_) in if isShow { self.autoFadeControlView() } }
+		} else {
 
 			self.mainMaskView.backgroundColor = UIColor(white: 0, alpha: isShow ? 0.5 : 0.0)
 			self.mainMaskView.alpha = isShow ? 1.0 : 0.0
 			self.layoutIfNeeded()
-		}) { (_) in if isShow { self.autoFadeControlView() } }
+		}
 	}
 
 	open func autoFadeControlView() {
 
 		cancelAutoFadeControlView()
-		delayItem = DispatchWorkItem { [weak self] in
 
-			guard let `self` = self else { return }
-			self.isShowControlView(false)
+		if isAutoFade {
+
+			delayItem = DispatchWorkItem { [weak self] in
+
+				guard let `self` = self else { return }
+				self.isShowControlView(false)
+			}
+			DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + fadeTimeInterval,
+										  execute: delayItem!)
 		}
-		DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 5,
-									  execute: delayItem!)
 	}
 
 	open func cancelAutoFadeControlView() { delayItem?.cancel() }
@@ -441,6 +473,8 @@ open class InStatControlView: UIView {
 	@objc open func fullScreenDidPress() {
 
 		guard let player = playerView else { return }
+		player.videoGravity = videoGravityButton.isSelected ? .resizeAspect : .resizeAspectFill
+		videoGravityButton.isSelected = !videoGravityButton.isSelected
 		player.delegate?.playerDidFullscreen?(player)
 	}
 

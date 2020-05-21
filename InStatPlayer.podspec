@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'InStatPlayer'
-  s.version          = '2.0.0'
+  s.version          = '2.0.6'
   s.summary          = 'InStatPlayer - media player'
 
   # This description is used to generate tags and improve search results.
@@ -21,10 +21,10 @@ Pod::Spec.new do |s|
   InStatPlayer - customizable media player
   DESC
 
-  s.homepage         = 'https://github.com/tularovbeslan/InStatPlayer'
+  s.homepage         = 'https://github.com/alexruden/InStatPlayer'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'tularovbeslan@gmail.com' => 'tularovbeslan@gmail.com' }
-  s.source           = { :git => 'https://github.com/tularovbeslan/InStatPlayer.git', :tag => s.version.to_s }
+  s.author           = { 'alexiosdeveloper@gmail.com' => 'alexiosdeveloper@gmail.com' }
+  s.source           = { :git => 'https://github.com/alexruden/InStatPlayer.git', :tag => s.version.to_s }
   s.social_media_url = 'https://twitter.com/JiromTomson'
   s.swift_version = '4.2'
   s.ios.deployment_target = '10.0'
